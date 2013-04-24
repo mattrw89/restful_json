@@ -20,9 +20,12 @@ module TwinTurbo
       # Try "The::Controller::Namespace::(singular name)Controller".contantize.
       # If controller in a module, will fall back on "(singular name)Controller".contantize.
       permitter_class_arr = ["#{self.class.to_s.match(/(.+)Controller/)[1].singularize}Permitter"]
-      if self.class.to_s['::']
-        permitter_class_arr << "#{self.class.to_s.match(/(.*?::)?(?<controller_name>.+)Controller/)[:controller_name].singularize}Permitter"
+
+      while true do
+        permitter_class_arr << "#{permitter_class_arr.last.match(/(.*?::)?(?<controller_name>.+)Permitter/)[:controller_name].singularize}Permitter"
+        break if !permitter_class_arr[-1].include? '::'
       end
+
       permitter_class_arr.each do |class_name|
         begin
           return class_name.constantize
