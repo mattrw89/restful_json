@@ -442,7 +442,8 @@ module RestfulJson
     # The controller's create (post) method to create a resource.
     def create
       logger.debug "#{params[:action].to_s} called in #{self.class}: model=#{@model_class}, request.format=#{request.format}, request.content_type=#{request.content_type}, params=#{params.inspect}" if self.debug
-      if self.use_permitters
+
+     if self.use_permitters
         authorize! :create, @model_class
         allowed_params = permitted_params
       elsif respond_to? @create_model_singular_name_params_sym
@@ -452,6 +453,7 @@ module RestfulJson
       else
         allowed_params = params
       end
+
       @value = @model_class.new(allowed_params)
       @value.save
       instance_variable_set(@model_at_singular_name_sym, @value)
@@ -472,6 +474,7 @@ module RestfulJson
         allowed_params = send(@model_singular_name_params_sym)
       else
         allowed_params = params
+
       end
       # to_s as safety measure for vulnerabilities similar to CVE-2013-1854
       @value = @model_class.where(id: params[:id].to_s).first # don't raise exception
@@ -486,6 +489,7 @@ module RestfulJson
     def destroy
       logger.debug "#{params[:action].to_s} called in #{self.class}: model=#{@model_class}, request.format=#{request.format}, request.content_type=#{request.content_type}, params=#{params.inspect}" if self.debug
       # to_s as safety measure for vulnerabilities similar to CVE-2013-1854
+      authorize! :destroy, @model_class
       @value = @model_class.where(id: params[:id].to_s).first # don't raise exception
       @value.destroy if @value
       instance_variable_set(@model_at_singular_name_sym, @value)
