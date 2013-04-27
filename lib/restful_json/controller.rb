@@ -356,7 +356,7 @@ module RestfulJson
           attr_sym = param_to_attr_and_arel_predicate[param_name][0]
           predicate_sym = param_to_attr_and_arel_predicate[param_name][1]
           if predicate_sym == :eq
-            value = value.where(attr_sym => convert_request_param_value_for_filtering(attr_sym, param))
+            value = value.where(attr_sym => convert_request_param_value_for_filtering(attr_sym, param).split(','))
           else
             one_or_more_param = param.split(self.filter_split).collect{|v|convert_request_param_value_for_filtering(attr_sym, v)}
             value = value.where(t[attr_sym].try(predicate_sym, one_or_more_param))
@@ -401,6 +401,8 @@ module RestfulJson
       end
 
       @value = value
+      @value.each {|obj| authorize! :read, obj}
+
       instance_variable_set(@model_at_plural_name_sym, @value)
       render_or_respond(true)
     rescue self.rescue_class => e
@@ -412,6 +414,8 @@ module RestfulJson
       logger.debug "#{params[:action].to_s} called in #{self.class}: model=#{@model_class}, request.format=#{request.format}, request.content_type=#{request.content_type}, params=#{params.inspect}" if self.debug
       # to_s as safety measure for vulnerabilities similar to CVE-2013-1854
       @value = @model_class.where(id: params[:id].to_s).first # don't raise exception if not found
+      authorize! :read,@value
+
       instance_variable_set(@model_at_singular_name_sym, @value)
       render_or_respond(true, @value.nil? ? :not_found : :ok)
     rescue self.rescue_class => e
@@ -489,8 +493,11 @@ module RestfulJson
     def destroy
       logger.debug "#{params[:action].to_s} called in #{self.class}: model=#{@model_class}, request.format=#{request.format}, request.content_type=#{request.content_type}, params=#{params.inspect}" if self.debug
       # to_s as safety measure for vulnerabilities similar to CVE-2013-1854
-      authorize! :destroy, @model_class
+
+
       @value = @model_class.where(id: params[:id].to_s).first # don't raise exception
+      #added authorize to destroy!
+      authorize! :destroy, @value
       @value.destroy if @value
       instance_variable_set(@model_at_singular_name_sym, @value)
       if !@value.respond_to?(:errors) || @value.errors.empty? || (request.format != 'text/html' && request.content_type != 'text/html')
