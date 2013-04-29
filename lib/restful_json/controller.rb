@@ -448,7 +448,7 @@ module RestfulJson
       logger.debug "#{params[:action].to_s} called in #{self.class}: model=#{@model_class}, request.format=#{request.format}, request.content_type=#{request.content_type}, params=#{params.inspect}" if self.debug
 
      if self.use_permitters
-        authorize! :create, @model_class
+        #authorize! :create, @model_class
         allowed_params = permitted_params
       elsif respond_to? @create_model_singular_name_params_sym
         allowed_params = send(@create_model_singular_name_params_sym)
@@ -459,6 +459,7 @@ module RestfulJson
       end
 
       @value = @model_class.new(allowed_params)
+      authorize! :create, @value
       @value.save
       instance_variable_set(@model_at_singular_name_sym, @value)
       render_or_respond(false, :created)
@@ -470,7 +471,7 @@ module RestfulJson
     def update
       logger.debug "#{params[:action].to_s} called in #{self.class}: model=#{@model_class}, request.format=#{request.format}, request.content_type=#{request.content_type}, params=#{params.inspect}" if self.debug
       if self.use_permitters
-        authorize! :update, @model_class
+#        authorize! :update, @model_class
         allowed_params = permitted_params
       elsif respond_to? @create_model_singular_name_params_sym
         allowed_params = send(@update_model_singular_name_params_sym)
@@ -482,6 +483,7 @@ module RestfulJson
       end
       # to_s as safety measure for vulnerabilities similar to CVE-2013-1854
       @value = @model_class.where(id: params[:id].to_s).first # don't raise exception
+      authorize! :update, @value
       @value.update_attributes(allowed_params) unless @value.nil?
       instance_variable_set(@model_at_singular_name_sym, @value)
       render_or_respond(true, @value.nil? ? :not_found : :ok)
